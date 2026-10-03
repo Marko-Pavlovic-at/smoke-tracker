@@ -120,5 +120,10 @@ This App aims to help the User reduce / quit Smoking
 - [x] Login page (`src/Login.jsx`) + session check in `src/App.jsx`
 
 ### 2. Setup screen
-- [ ] **Next:** create the `profiles` table in Supabase (with Row Level Security)
-- [ ] Setup form (baseline, pack price, wake/sleep time)
+- [x] `profiles` table in Supabase (with Row Level Security)
+- [x] Setup form (`src/Setup.jsx`), shown by `App.jsx` when no profile exists
+- [ ] Later: settings page to edit pack price / wake / sleep time
+
+### 3. Logging
+- [ ] **Next:** create the `logs` table in Supabase (with Row Level Security)
+- [ ] Log button + list of today's logs (delete, add with past time)
