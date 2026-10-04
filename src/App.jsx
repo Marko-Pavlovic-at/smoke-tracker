@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import Login from "./Login";
 import Setup from "./Setup"; // NEW
 import "./App.css";
+import Logs from "./Logs";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -67,6 +68,7 @@ function App() {
       <p>
         Day: {profile.wake_time} – {profile.sleep_time}
       </p>
+      <Logs profile={profile} />
       <button onClick={() => supabase.auth.signOut()}>Log out</button>
     </div>
   );

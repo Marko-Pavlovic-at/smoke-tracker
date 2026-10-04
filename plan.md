@@ -125,5 +125,7 @@ This App aims to help the User reduce / quit Smoking
 - [ ] Later: settings page to edit pack price / wake / sleep time
 
 ### 3. Logging
-- [ ] **Next:** create the `logs` table in Supabase (with Row Level Security)
-- [ ] Log button + list of today's logs (delete, add with past time)
+- [x] `logs` table in Supabase (with Row Level Security, `user_id` defaults to `auth.uid()`)
+- [x] Log button + list of today's logs (`src/Logs.jsx`)
+- [ ] **Next:** delete a log
+- [ ] Add a log with a past time
