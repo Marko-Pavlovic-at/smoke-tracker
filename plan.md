@@ -6,7 +6,7 @@ This App aims to help the User reduce / quit Smoking
 
 - React
 - Javascript
-- Backend via Supabase and cloudflare
+- Backend via Supabase, hosting on Netlify
 
 ## Features
 
@@ -88,7 +88,7 @@ This App aims to help the User reduce / quit Smoking
 - Any logged cigarette restarts the counter
 
 ### Tech
-- Supabase: login + database. Cloudflare Pages: hosting only. (VPS self-hosting = separate future project)
+- Supabase: login + database. Netlify: hosting only (changed from Cloudflare Pages, Netlify is already used for the Scrimba projects). (VPS self-hosting = separate future project)
 - Responsive website, no PWA
 - Timezones: no extra work. Supabase stores time in UTC automatically and JavaScript shows it in local time
 
@@ -107,7 +107,7 @@ This App aims to help the User reduce / quit Smoking
 6. Timer
 7. Stats (money over time, progress)
 8. Quit mode (smoke-free counter, 90-day success)
-9. Deploy to Cloudflare Pages
+9. Deploy to Netlify
 
 ## Progress
 
@@ -148,7 +148,7 @@ This App aims to help the User reduce / quit Smoking
 - [x] Target 0: smoke-free days counter, 90 days = success
 
 ### 9. Deploy
-- [ ] **Next:** deploy to Cloudflare Pages
+- [ ] **Next:** deploy to Netlify (build with `npm run build`, drag the `dist` folder into Netlify)
 
 ### Code overview
 - `App.jsx`: login check, loads profile + phases + logs, tabs (Today / Stats / Settings)
