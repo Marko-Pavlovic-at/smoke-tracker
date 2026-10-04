@@ -53,6 +53,19 @@ function Logs({ profile }) {
     setLogs([data, ...logs]);
   }
 
+  async function handleDelete(id) {
+    setError("");
+
+    const { error } = await supabase.from("logs").delete().eq("id", id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setLogs(logs.filter((log) => log.id !== id));
+  }
+
   return (
     <section>
       <button onClick={handleLog}>Log a cigarette</button>
@@ -66,6 +79,7 @@ function Logs({ profile }) {
               hour: "2-digit",
               minute: "2-digit",
             })}
+            <button onClick={() => handleDelete(log.id)}>Delete</button>
           </li>
         ))}
       </ul>
