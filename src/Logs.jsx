@@ -1,75 +1,39 @@
-import { useState, useEffect, use } from "react";
+import { useState } from "react";
 import { supabase } from "./supabaseClient";
+import { getDayStart, formatTime, formatMoney } from "./dayUtils";
 
-// The day starts at wake time, not midnight.
-// Before wake time (e.g. 01:00), the day started yesterday at wake time.
-function getDayStart(wakeTime) {
-  const [hours, minutes] = wakeTime.split(":").map(Number);
-  const start = new Date();
-  start.setHours(hours, minutes, 0, 0);
-
-  if (new Date() < start) {
-    start.setDate(start.getDate() - 1);
-  }
-
-  return start;
-}
-
-function Logs({ profile }) {
-  const [logs, setLogs] = useState([]);
-  const [error, setError] = useState("");
+function Logs({ profile, target, todayLogs, onChange }) {
   const [pastTime, setPastTime] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const dayStart = getDayStart(profile.wake_time);
-
-    supabase
-      .from("logs")
-      .select("*")
-      .gte("smoked_at", dayStart.toISOString())
-      .order("smoked_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message);
-          return;
-        }
-        setLogs(data);
-      });
-  }, [profile.wake_time]);
-
-  async function handleLog() {
+  async function saveLog(smokedAt) {
     setError("");
+    setNotice("");
+    setSaving(true);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("logs")
-      .insert({ smoked_at: new Date().toISOString() })
-      .select()
-      .single();
+      .insert({ smoked_at: smokedAt.toISOString() });
 
     if (error) {
       setError(error.message);
-      return;
+      setSaving(false);
+      return false;
     }
 
-    setLogs([data, ...logs]);
+    await onChange();
+    setSaving(false);
+    return true;
   }
 
-  async function handleDelete(id) {
-    setError("");
-
-    const { error } = await supabase.from("logs").delete().eq("id", id);
-
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    setLogs(logs.filter((log) => log.id !== id));
+  function handleLog() {
+    saveLog(new Date());
   }
 
   async function handleAddPast(e) {
     e.preventDefault();
-    setError("");
 
     const [hours, minutes] = pastTime.split(":").map(Number);
     const smokedAt = new Date();
@@ -80,34 +44,82 @@ function Logs({ profile }) {
       smokedAt.setDate(smokedAt.getDate() - 1);
     }
 
-    const { data, error } = await supabase
-      .from("logs")
-      .insert({ smoked_at: smokedAt.toISOString() })
-      .select()
-      .single();
+    const saved = await saveLog(smokedAt);
+    if (!saved) return;
+
+    setPastTime("");
+    if (smokedAt < getDayStart(profile.wake_time)) {
+      setNotice("Saved. It was before your wake time, so it counts towards yesterday.");
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm("Delete this cigarette?")) return;
+    setError("");
+    setNotice("");
+
+    const { error } = await supabase.from("logs").delete().eq("id", id);
 
     if (error) {
       setError(error.message);
       return;
     }
 
-    // newest first, same order as the list from Supabase
-    const newLogs = [...logs, data].sort(
-      (a, b) => new Date(b.smoked_at) - new Date(a.smoked_at),
-    );
-    setLogs(newLogs);
-    setPastTime("");
+    onChange();
   }
+
+  const count = todayLogs.length;
   const savedToday =
-    (profile.baseline_count - logs.length) * (profile.pack_price / 20);
+    (profile.baseline_count - count) * (profile.pack_price / 20);
 
   return (
-    <section>
-      <button onClick={handleLog}>Log a cigarette</button>
+    <section className="card">
+      <button className="big-button" onClick={handleLog} disabled={saving}>
+        {saving ? "Saving..." : "Log a cigarette"}
+      </button>
 
-      <form onSubmit={handleAddPast}>
+      <div className="today-stats">
+        <div>
+          <p className="stat-number">
+            {count}
+            <span className="stat-of"> / {target}</span>
+          </p>
+          <p className="stat-label">smoked today</p>
+        </div>
+        <div>
+          <p className="stat-number">{formatMoney(savedToday)}</p>
+          <p className="stat-label">saved today</p>
+        </div>
+      </div>
+
+      {target > 0 && count > target && (
+        <p className="warning">
+          You're {count - target} over your target of {target} today.
+        </p>
+      )}
+      {target > 0 && count === target && (
+        <p className="info">That was your last one for today.</p>
+      )}
+      {target === 0 && count > 0 && (
+        <p className="warning">
+          You smoked today, so the smoke-free counter started over.
+        </p>
+      )}
+
+      <ul className="log-list">
+        {todayLogs.map((log) => (
+          <li key={log.id}>
+            <span>{formatTime(log.smoked_at)}</span>
+            <button className="link danger" onClick={() => handleDelete(log.id)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <form className="inline-form" onSubmit={handleAddPast}>
         <label>
-          Forgot one? Time
+          Forgot one?
           <input
             type="time"
             value={pastTime}
@@ -115,25 +127,13 @@ function Logs({ profile }) {
             required
           />
         </label>
-        <button type="submit">Add</button>
+        <button type="submit" disabled={saving}>
+          Add
+        </button>
       </form>
 
-      <h2>Today: {logs.length}</h2>
-      <p>Saved today: {savedToday.toFixed(2)} €</p>
-
-      <ul>
-        {logs.map((log) => (
-          <li key={log.id}>
-            {new Date(log.smoked_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-            <button onClick={() => handleDelete(log.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-
-      {error && <p>{error}</p>}
+      {notice && <p className="info">{notice}</p>}
+      {error && <p className="error">{error}</p>}
     </section>
   );
 }

@@ -122,7 +122,7 @@ This App aims to help the User reduce / quit Smoking
 ### 2. Setup screen
 - [x] `profiles` table in Supabase (with Row Level Security)
 - [x] Setup form (`src/Setup.jsx`), shown by `App.jsx` when no profile exists
-- [ ] Later: settings page to edit pack price / wake / sleep time
+- [x] Settings page to edit pack price / wake / sleep time (`src/Settings.jsx`)
 
 ### 3. Logging
 - [x] `logs` table in Supabase (with Row Level Security, `user_id` defaults to `auth.uid()`)
@@ -131,4 +131,28 @@ This App aims to help the User reduce / quit Smoking
 - [x] Add a log with a past time
 
 ### 4. Today's count + money saved
-- [ ] **Next:** show money saved today
+- [x] Today's count + money saved today (in `src/Logs.jsx`)
+
+### 5. Phases
+- [x] `phases` table in Supabase (with Row Level Security)
+- [x] Set a target (`src/Phase.jsx`), must be lower than the current one, locked until 14 days are done
+- [x] Warnings (over target, last one for today), reset when smoking the old target or more in one day (`src/phaseStatus.js`, calculated from the logs, so deleting a wrong log undoes a reset)
+
+### 6. Timer
+- [x] Countdown to the next allowed cigarette, "done for today", "past your sleep time" (`src/Timer.jsx`)
+
+### 7. Stats
+- [x] Total saved, cigarettes not smoked, last 7 days, per-day table, target history (`src/Stats.jsx`)
+
+### 8. Quit mode
+- [x] Target 0: smoke-free days counter, 90 days = success
+
+### 9. Deploy
+- [ ] **Next:** deploy to Cloudflare Pages
+
+### Code overview
+- `App.jsx`: login check, loads profile + phases + logs, tabs (Today / Stats / Settings)
+- `dayUtils.js`: day starts at wake time, day keys, formatting
+- `phaseStatus.js`: 14-day check, reset, smoke-free counter
+- `useNow.js`: current time that updates (timer every second, App every minute)
+- Styling: `index.css` (colors, forms, buttons, dark mode), `App.css` (layout, cards)
