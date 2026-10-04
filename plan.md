@@ -128,4 +128,7 @@ This App aims to help the User reduce / quit Smoking
 - [x] `logs` table in Supabase (with Row Level Security, `user_id` defaults to `auth.uid()`)
 - [x] Log button + list of today's logs (`src/Logs.jsx`)
 - [x] Delete a log
-- [ ] **Next:** add a log with a past time
+- [x] Add a log with a past time
+
+### 4. Today's count + money saved
+- [ ] **Next:** show money saved today

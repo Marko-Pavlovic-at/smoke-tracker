@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { supabase } from "./supabaseClient";
 
 // The day starts at wake time, not midnight.
@@ -18,6 +18,7 @@ function getDayStart(wakeTime) {
 function Logs({ profile }) {
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState("");
+  const [pastTime, setPastTime] = useState("");
 
   useEffect(() => {
     const dayStart = getDayStart(profile.wake_time);
@@ -66,11 +67,59 @@ function Logs({ profile }) {
     setLogs(logs.filter((log) => log.id !== id));
   }
 
+  async function handleAddPast(e) {
+    e.preventDefault();
+    setError("");
+
+    const [hours, minutes] = pastTime.split(":").map(Number);
+    const smokedAt = new Date();
+    smokedAt.setHours(hours, minutes, 0, 0);
+
+    // A time later than now must mean yesterday (e.g. it's 01:00 and you enter 23:30)
+    if (smokedAt > new Date()) {
+      smokedAt.setDate(smokedAt.getDate() - 1);
+    }
+
+    const { data, error } = await supabase
+      .from("logs")
+      .insert({ smoked_at: smokedAt.toISOString() })
+      .select()
+      .single();
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    // newest first, same order as the list from Supabase
+    const newLogs = [...logs, data].sort(
+      (a, b) => new Date(b.smoked_at) - new Date(a.smoked_at),
+    );
+    setLogs(newLogs);
+    setPastTime("");
+  }
+  const savedToday =
+    (profile.baseline_count - logs.length) * (profile.pack_price / 20);
+
   return (
     <section>
       <button onClick={handleLog}>Log a cigarette</button>
 
+      <form onSubmit={handleAddPast}>
+        <label>
+          Forgot one? Time
+          <input
+            type="time"
+            value={pastTime}
+            onChange={(e) => setPastTime(e.target.value)}
+            required
+          />
+        </label>
+        <button type="submit">Add</button>
+      </form>
+
       <h2>Today: {logs.length}</h2>
+      <p>Saved today: {savedToday.toFixed(2)} €</p>
 
       <ul>
         {logs.map((log) => (
